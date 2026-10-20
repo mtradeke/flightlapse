@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060a12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>FlightLapse v4 | Real Flights, Time-Lapsed</title>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <style>
@@ -41,7 +44,52 @@ canvas{width:100%;height:100%;display:block}
 @keyframes p{50%{opacity:.55}}
 .note{font-size:11px;color:var(--d);margin-top:8px;text-align:center}
 @media(max-width:900px){body{flex-direction:column;overflow:auto;height:auto}aside{width:100%}.stage,.bar{width:100%}}
-.th{width:100%;height:96px;object-fit:cover;border-radius:7px;margin-bottom:8px;display:block}.th.big{height:150px}</style>
+.th{width:100%;height:96px;object-fit:cover;border-radius:7px;margin-bottom:8px;display:block}.th.big{height:150px}
+/* ===== MOBILE / TOUCH ===== */
+html{-webkit-text-size-adjust:100%}
+button,select,input{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#fsx,#fsp{display:none}
+.stage:fullscreen{display:flex;align-items:center;justify-content:center;background:#000;border:0;border-radius:0;aspect-ratio:auto;width:100%;height:100%}
+.stage:fullscreen canvas,.stage.pfs canvas{width:100%;height:100%;object-fit:contain}
+.stage.pfs{display:flex;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100vw;height:100vh;height:100dvh;z-index:1000;border:0;border-radius:0;aspect-ratio:auto;background:#000}
+.stage.pfs #fsx,.stage.pfs #fsp{display:flex}
+#fsx,#fsp{position:absolute;top:max(10px,env(safe-area-inset-top));width:48px;height:48px;align-items:center;justify-content:center;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.35);font-size:20px;padding:0;z-index:5;cursor:pointer}
+#fsx{right:max(12px,env(safe-area-inset-right))}#fsp{right:calc(max(12px,env(safe-area-inset-right)) + 56px)}
+body.pfsb{overflow:hidden;overscroll-behavior:none}
+@media(orientation:portrait){
+ .stage.pfs{left:100vw;width:100vh;width:100dvh;height:100vw;transform-origin:0 0;transform:rotate(90deg)}
+}
+@media(max-width:960px){
+ body{display:flex;flex-direction:column;height:auto;min-height:100vh;min-height:100dvh;overflow-x:hidden;overflow-y:auto}
+ main{order:-1;flex:none;justify-content:flex-start;padding:8px;padding-top:max(8px,env(safe-area-inset-top));padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));background:#04070d;border-bottom:1px solid var(--b)}
+ aside{order:1;width:100%;border-right:0;flex:none}
+ .scroll{overflow:visible;padding:4px 14px calc(28px + env(safe-area-inset-bottom))}
+ .stage{width:100%;border-radius:10px}
+ .bar{width:100%;margin-top:8px;gap:6px;display:grid;grid-template-columns:repeat(6,1fr)}
+ .bar button,.bar select{min-height:44px;width:100%!important;font-size:14px;padding:6px 4px;flex:none;grid-column:span 2}
+ .bar select{font-size:16px;-webkit-appearance:none;appearance:none;text-overflow:ellipsis;padding:6px 16px 6px 8px;background:#0a101a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%237f90ab' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 6px center}
+ .bar #cld,.bar #shot,.bar #fs,.bar #snd{grid-column:span 1;width:100%;padding:6px 0;font-size:20px}
+ .timer{order:9;grid-column:1/-1;min-width:0;flex-direction:row;justify-content:space-between;align-items:center;gap:10px;padding:2px 4px;font-size:12px}
+ .note{display:none}
+ .brand{padding:12px 16px}.brand b{font-size:22px}
+ input,select{font-size:16px;min-height:46px}
+ .swap{width:52px}
+ .chip{padding:10px 14px;font-size:13px}
+ .card{padding:14px}.card .t{font-size:15px}.card .m{font-size:13px}
+ .th{height:120px}
+}
+@media(max-width:960px) and (min-height:700px){main{position:sticky;top:0;z-index:30}}
+@media(max-width:960px) and (orientation:landscape) and (max-height:520px){
+ main{display:grid;grid-template-columns:minmax(0,1fr) 236px;gap:8px;align-items:start;align-content:start;padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));position:static}
+ .stage{grid-column:1;grid-row:1;width:100%}
+ .bar{grid-column:2;grid-row:1;width:100%;margin-top:0;grid-template-columns:repeat(4,1fr);gap:5px}
+ .bar button,.bar select{min-height:38px;font-size:14px;padding:4px 14px 4px 6px;grid-column:span 2}
+ .bar .rec{grid-column:span 4}
+ .bar #snd,.bar #cld,.bar #shot,.bar #fs{grid-column:span 1;padding:4px 0;font-size:18px}
+ .timer{order:9;grid-column:span 4;flex-direction:column;align-items:flex-start;gap:0;padding:2px 2px;font-size:11px}
+ .timer b{font-size:12px}
+}
+</style>
 </head>
 <body>
 <aside>
@@ -62,7 +110,7 @@ canvas{width:100%;height:100%;display:block}
  </div>
 </aside>
 <main>
- <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+ <div class="stage" id="stage"><canvas id="cv"></canvas><button id="fsx" title="Exit fullscreen">✕</button><button id="fsp" title="Play / pause">⏯</button></div>
  <div class="bar">
   <button class="go" id="play">▶ Play</button>
   <button id="restart">↺ Restart</button>
@@ -669,6 +717,29 @@ function drawIntro(s){const v=VID.intro;if(introMode!==s.ph){introMode=s.ph;v.cu
  x.fillStyle='#000';x.fillRect(0,0,W,H);drawFrame(v,1)}
 
 fill();refresh(true);requestAnimationFrame(t=>{last=t;frame(t)});
+</script>
+<script>
+/* ---------- MOBILE: fullscreen (with iPhone fallback), scroll-to-player, touch ---------- */
+(function(){
+ const st=$('#stage'),isP=()=>st.classList.contains('pfs'),isF=()=>document.fullscreenElement===st||document.webkitFullscreenElement===st;
+ const quit=()=>{st.classList.remove('pfs');document.body.classList.remove('pfsb')};
+ async function enter(){
+  const rq=st.requestFullscreen||st.webkitRequestFullscreen;
+  if(rq){try{await rq.call(st);try{await screen.orientation.lock('landscape')}catch(e){}return}catch(e){}}
+  st.classList.add('pfs');document.body.classList.add('pfsb');
+ }
+ function leave(){
+  if(isP())quit();
+  if(isF()){try{(document.exitFullscreen||document.webkitExitFullscreen).call(document)}catch(e){}}
+  try{screen.orientation.unlock()}catch(e){}
+ }
+ $('#fs').onclick=()=>(isP()||isF())?leave():enter();
+ $('#fsx').onclick=leave;
+ $('#fsp').onclick=()=>$('#play').click();
+ document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement){try{screen.orientation.unlock()}catch(e){}}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isP())leave()});
+ $('#list').addEventListener('click',e=>{if(e.target.closest('.card')&&matchMedia('(max-width:960px)').matches)window.scrollTo({top:0,behavior:'smooth'})});
+})();
 </script>
 </body>
 </html>
