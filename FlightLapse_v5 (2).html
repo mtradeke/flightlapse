@@ -70,7 +70,7 @@ canvas{width:100%;height:100%;display:block}
   <div class="timer" id="timer"><b id="tRec">Not recording</b><span id="tSim"></span></div>
   <select id="view" title="Camera view (keys 1-4)"><option value="auto">🎬 Auto</option><option value="map">🗺 Map</option><option value="win">🪟 Window</option><option value="globe">🌍 Globe</option></select>
   <select id="spd" title="Playback speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select>
-  <button id="pm" title="Pilot mode: you request take-off and landing clearance">🎮 Pilot mode: Off</button>
+  <button id="pm" title="Pilot mode: you request take-off and landing clearance">🎮 Pilot mode: ON</button>
   <button id="snd" title="Sound on/off (key M)">🔊 Sound</button>
   <button id="cld" title="Clouds on/off (key C)">☁ Clouds</button>
   <button id="shot" title="Save thumbnail (PNG)">📷 Photo</button>
@@ -297,16 +297,16 @@ function profile(L){const vc=L.ac[1],V0=Math.min(300,vc*.55),KS=L.ac[7]||.0165,s
  const lv=p=>L.dist>3500?L.alt-4000+2000*ss((p-.3)/.025)+2000*ss((p-.64)/.025):L.alt;
  const cr=t=>vc*(1+.012*Math.sin(t*.9+sd)+.007*Math.sin(t*2.7+sd*2));
  for(let k=0;k<6000;k++){const p=Math.min(1,s/L.dist),rem=L.dist-s,hd=hdgOf(L,p),pos=at(L,p);let alt,tas;
-  if(t<roll){alt=0;tas=(V0-20)*t/roll+10}
+  if(t<roll&&!L.air){alt=0;tas=(V0-20)*t/roll+10}
   else if(rem<3.4){alt=0;tas=Math.max(30,(V0-40)*rem/3.4)}
   else if(rem<dD){const e=ss((rem-40)/(dD-40));alt=rem<40?3000*(rem-3.4)/36.6:3000+(L.alt-3000)*e;tas=Math.min(cr(t),V0+alt*KS)}
-  else if(t<roll+tc){const e=(t-roll)/tc;alt=lv(0)*(1-(1-e)**2);tas=Math.min(cr(t),V0+alt*KS)}
+  else if(t<roll+tc&&!L.air){const e=(t-roll)/tc;alt=lv(0)*(1-(1-e)**2);tas=Math.min(cr(t),V0+alt*KS)}
   else{alt=lv(p);tas=cr(t)}
   const wd=jet(pos[0],pos[1],sd)*Math.sin(hd*R)*Math.min(1,alt/25000),tur=(7*Math.sin(t*41+sd)+4*Math.sin(t*97+sd))*Math.min(1,alt/20000),gs=Math.max(30,tas+wd+tur);
   rows.push([t,p,gs,tas,wd+tur,alt]);if(s>=L.dist)break;s+=gs*dt;t+=dt}
  L.rows=rows;L.dt=dt;L.h=t;L.tc=roll+tc;L.dD=dD}
 const sm=(L,t,c)=>{const n=L.rows.length-2,f=Math.max(0,Math.min(n+1,t/L.dt)),i=Math.min(n,Math.floor(f)),u=Math.min(1,f-i);return L.rows[i][c]+(L.rows[i+1][c]-L.rows[i][c])*u};
-function mkLeg(al,a,b,ak){const P=buildPath(a,b),d=P.dist,ac=ak?AC[ak]:pickAc(al,d),L={a,b,ac,dist:d,pts:P.pts,alt:Math.min(Math.round((ac[2]-3000)/1000)*1000,Math.round((18000+d*9)/1000)*1000)};profile(L);return L}
+function mkLeg(al,a,b,ak){const P=buildPath(a,b),d=P.dist,ac=ak?AC[ak]:pickAc(al,d),L={a,b,ac,dist:d,pts:P.pts,air:!!window.AIRSTART,alt:Math.min(Math.round((ac[2]-3000)/1000)*1000,Math.round((18000+d*9)/1000)*1000)};profile(L);return L}
 function itins(a,b){const out=[],dd=hav(AP[a],AP[b]);
  const add=(al,pairs,ak)=>{const legs=pairs.map(p=>mkLeg(al,p[0],p[1],ak)),dist=legs.reduce((s,l)=>s+l.dist,0),fly=legs.reduce((s,l)=>s+l.h,0),stops=legs.length-1;
   const no=al[1]+(100+((a.charCodeAt(0)*31+b.charCodeAt(1)*17+al[1].charCodeAt(0)*7)%880));
@@ -726,11 +726,11 @@ const TELE={FJ:'Viper',CE:'Cessna',RE:'Regional',JM:'Jambo',SL:'Safari',SW:'Skyw
 const DG=d=>d==='9'?'niner':['zero','one','two','three','four','five','six','seven','eight'][+d],numSp=n=>n.replace(/\D/g,'').split('').map(DG).join(' '),csp=it=>(TELE[it.al[1]]||it.al[0])+' '+numSp(it.no);
 const SEC=[['Nairobi Control','Kenya',-4.7,4.9,33.9,41],['Mogadishu Control','Somalia',-1.7,3.5,41,50.5],['Mogadishu Control','Somalia',3.5,11.9,45,52],['Addis Ababa Control','Ethiopia',3.4,15,33,48],['Entebbe Control','Uganda',-1.5,4.2,29.5,35],['Dar es Salaam Control','Tanzania',-11.8,-1,29.5,40.5],['Khartoum Control','Sudan',3.5,22,22,38],['Cairo Control','Egypt',22,31.7,25,36],['Jeddah Control','Saudi Arabia',16,32,34.5,55],['Doha Control','Qatar',24.4,26.3,50.7,51.8],['Emirates Control','UAE',22.5,26.2,51.8,56.5],['Ankara Control','Türkiye',36,42,26,44.8],['Athens Control','Greece',34,41.5,19.5,26],['Rome Control','Italy',36.5,47,6.6,18.6],['Langen Control','Germany',47.3,55,5.8,15],['Paris Control','France',42.3,51,-4.8,8],['London Control','UK',50,59,-8,2],['Madrid Control','Spain',36,43.8,-9.3,3.3],['Shanwick Oceanic','Oceanic',45,61,-50,-8],['Gander Oceanic','Oceanic',40,65,-60,-50],['New York Center','USA',37,47,-85,-67],['Chicago Center','USA',37,49,-105,-85],['Los Angeles Center','USA',32,42,-125,-105],['Mumbai Control','India',8,26,68,80]];
 function sector(la,lo){lo=((lo+540)%360)-180;for(const r of SEC)if(la>=r[2]&&la<=r[3]&&lo>=r[4]&&lo<=r[5])return r;let b=null,bd=1e9;for(const k in AP){const d=hav({lat:la,lon:lo},AP[k]);if(d<bd){bd=d;b=AP[k]}}return bd<700?[b.co+' Control',b.co]:['Oceanic Control','Oceanic']}
-const A={f:{},gate:null,hold:0,holding:0,dq:0,log:[],pm:false,zero:0,sec:null,secT:0,lastN:-1};
+const A={f:{},gate:null,hold:0,holding:0,dq:0,log:[],pm:true,zero:0,sec:null,secT:0,lastN:-1};
 const atcBox=document.createElement('div');atcBox.id='atc';atcBox.innerHTML='<div id="atcl"></div><div id="atcb"></div>';$('#stage').appendChild(atcBox);if(getComputedStyle($('#stage')).position==='static')$('#stage').style.position='relative';
-document.head.insertAdjacentHTML('beforeend','<style>#atc{position:absolute;right:14px;top:96px;width:min(380px,38%);font-size:12px;line-height:1.4;pointer-events:none}#atcl{background:rgba(6,12,22,.72);border:1px solid #1d2a3d;border-radius:10px;padding:8px 10px;display:none}#atcl div{margin:2px 0;color:#d6e2f2}#atcl b{color:#38d6ff}#atcl .p b{color:#ffc247}#atcb{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;pointer-events:auto}#atcb button{flex:1 1 auto;padding:8px 10px;font-size:12px;font-weight:700;border:1px solid #38d6ff;background:#0a101a;color:#38d6ff;border-radius:8px;cursor:pointer}#atcb button.g{background:#35f0a4;color:#001018;border:0}#atcb button.r{border-color:#ff6b6b;color:#ff6b6b}#atcb .st{width:100%;color:#ffc247;font-weight:700}#pm.on{background:#35f0a4;color:#001018;border:0}</style>');
+document.head.insertAdjacentHTML('beforeend','<style>#atc{position:absolute;right:14px;top:96px;width:min(290px,30%);font-size:11px;line-height:1.4;pointer-events:none}#atcl{background:rgba(6,12,22,.55);border:1px solid #1d2a3d;border-radius:10px;padding:8px 10px;display:none}#atcl div{margin:2px 0;color:#d6e2f2}#atcl b{color:#38d6ff}#atcl .p b{color:#ffc247}#atcb{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;pointer-events:auto}#atcb button{flex:1 1 auto;padding:5px 8px;font-size:11px;font-weight:700;border:1px solid #38d6ff;background:#0a101a;color:#38d6ff;border-radius:8px;cursor:pointer}#atcb button.g{background:#35f0a4;color:#001018;border:0}#atcb button.r{border-color:#ff6b6b;color:#ff6b6b}#atcb .st{width:100%;color:#ffc247;font-weight:700}#pm.on{background:#35f0a4;color:#001018;border:0}</style>');
 function renderLog(){const l=$('#atcl');l.style.display=A.log.length?'block':'none';l.innerHTML=A.log.map(m=>`<div class="${m[2]?'p':''}"><b>${m[0]}:</b> ${m[1]}</div>`).join('')}
-function say2(who,t,p){A.log.push([who,t,p]);if(A.log.length>5)A.log.shift();renderLog();if(sndOn&&window.speechSynthesis&&+$('#spd').value<=4){if(speechSynthesis.pending>3)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.02;u.pitch=p?1.15:.75;speechSynthesis.speak(u)}}
+function say2(who,t,p){A.log.push([who,t,p]);if(A.log.length>2)A.log.shift();A.logT=performance.now();renderLog();if(sndOn&&window.speechSynthesis&&!p&&+$('#spd').value<=8){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.02;u.pitch=p?1.15:.75;speechSynthesis.speak(u)}}
 const rwN=(L,e)=>String(((Math.round(rwH(L,e)/10)+35)%36)+1).padStart(2,'0'),wind=c=>{const h=hash(c.charCodeAt(0)*7+c.charCodeAt(2));return 'wind '+String(((Math.round(h*35)+1)*10)%360||360).padStart(3,'0')+' degrees '+Math.round(5+hash(c.charCodeAt(1))*9)+' knots'},qnh=c=>1008+Math.round(hash(c.charCodeAt(2)*3)*14);
 const dAh=(L,i)=>16*i+10*hash(i+Math.round(L.dist));
 function ahead(L,p){const ru=L.dist*(1-p);let n=0;for(let i=1;i<=3;i++)if(ru-dAh(L,i)-850*A.hold>0)n++;return n}
@@ -739,7 +739,7 @@ function atcTick(){if(!cur)return;const s=state(T);if(T===0){if(!A.zero){A.zero=
  clr=(c,r,e)=>{say2(c.city+' Tower',`${cs}, ${wind(c.c)}, runway ${r}, ${e}.`);say2(cs,(e.includes('land')?'Cleared to land':'Cleared for takeoff')+` runway ${r}, ${cs}.`,1)};
  if(s.t<.004&&s.alt<1&&!A.f[k+'dep']){A.f[k+'dep']=1;if(A.pm){A.dq=1+Math.floor(hash(L.dist)*3);A.gate={type:'dep',T};say2(dep.city+' Ground',`${cs}, hold position, number ${A.dq+1} for departure.`);say2(cs,`Holding position, ${cs}.`,1)}else clr(dep,rwN(L,0),'cleared for takeoff')}
  if(s.phase==='Climb'&&s.alt>2500)once('cl',()=>{say2(dep.city+' Departure',`${cs}, radar contact, climb flight level ${Math.round(L.alt/100)}.`);say2(cs,`Climb flight level ${Math.round(L.alt/100)}, ${cs}.`,1)});
- if(s.alt>2500&&ru>160&&performance.now()-A.secT>500){A.secT=performance.now();const r=sector(s.lat,s.lon),o=A.sec;if(!o||o[0]!==r[0]){A.sec=r;if(o){say2(o[0],`${cs}, leaving ${o[1]} airspace, contact ${r[0]}, good day.`);say2(cs,`Contact ${r[0]}, good day, ${cs}.`,1)}say2(r[0],`${cs}, ${r[0]}, radar contact${!o||o[1]!==r[1]?', welcome to '+r[1]+' airspace':''}.`)}}
+ if(s.alt>2500&&ru>160&&performance.now()-A.secT>500){A.secT=performance.now();const r=sector(s.lat,s.lon),o=A.sec;if(!o||o[0]!==r[0]){A.sec=r;say2(r[0],`${cs}, ${o?'leaving '+o[1]+' airspace, now ':''}${r[0]}, radar contact${!o||o[1]!==r[1]?', welcome to '+r[1]+' airspace':''}.`)}}
  if(ru<150)once('ds',()=>{say2(arr.city+' Approach',`${cs}, descend flight level 100, expect ILS runway ${rwN(L,1)}, QNH ${qnh(arr.c)}.`);say2(cs,`Descend flight level 100, expect ILS runway ${rwN(L,1)}, ${cs}.`,1)});
  if(ru<=85&&!A.f[k+'clr']){const n=ahead(L,s.p);if(!A.f[k+'sq']){A.f[k+'sq']=1;say2(arr.city+' Approach',`${cs}, number ${n+1} for landing${n?', '+n+' aircraft ahead':''}.`);if(A.pm)A.gate={type:'app',T}}
   else if(A.gate&&A.gate.type==='app'&&A.holding&&n!==A.lastN){A.lastN=n;say2(arr.city+' Approach',n?`${cs}, number ${n+1}, ${n} ahead.`:`${cs}, you are number one, report ready.`)}
@@ -750,8 +750,13 @@ function drawBtns(L,s,ru){const b=$('#atcb'),g=A.gate,k=cur?cur.id+'|'+(s?s.i:0)
  if(g&&g.type==='dep')h=`<div class="st">Departure queue: number ${A.dq+1}</div><button class="g" data-a="to">🛫 Request take-off clearance</button>`;
  else if(g&&g.type==='app')h=`<div class="st">${A.holding?'HOLDING':'On approach'} · aircraft ahead: ${ahead(L,s.p)}</div><button class="g" data-a="ld">🛬 Request landing clearance</button><button data-a="hd">${A.holding?'▶ Stop holding':'⟲ Hold'}</button><button class="r" data-a="ga">⤴ Go around</button>`;
  else if(A.pm&&s&&L&&A.f[k+'clr']&&s.phase!=='Landing'&&ru>3.4)h='<button class="r" data-a="ga">⤴ Go around</button>';
+ else if(A.pm&&s&&L&&s.alt>3000&&ru>80)h=A.dvOpen?'<input id="dvq" list="apl" placeholder="Divert to: airport, city or country" style="flex:1;padding:6px;font-size:11px"><button class="g" data-a="dvgo">Go</button>':'<button data-a="dv">🧭 Divert to another airport</button>';
  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h}}
 $('#atcb').onclick=e=>{const a=e.target.dataset.a;if(!a||!cur)return;const s=state(T),L=s.L,k=cur.id+'|'+s.i+'|',cs=csp(cur),dep=AP[L.a],arr=AP[L.b];
+ if(a==='dv'){A.dvOpen=1;drawBtns(L,s,L.dist*(1-s.p));return}
+ if(a==='dvgo'){const v=$('#dvq').value.trim(),m=v.match(/\(([A-Z]{3})\)/),q=v.toLowerCase(),c=(m&&m[1])||Object.keys(AP).find(k=>k!=='DIV'&&(k.toLowerCase()===q||AP[k].city.toLowerCase()===q));if(!c||c===L.b){say2('Tower',c?'That is already your destination.':'Airport not found. Pick one from the list.');return}
+  const ak=Object.keys(AC).find(k=>AC[k]===L.ac);AP.DIV={c:'DIV',city:'Diversion',co:'',lat:s.lat,lon:s.lon};window.AIRSTART=1;const l=mkLeg(cur.al,'DIV',c,ak);window.AIRSTART=0;const it={id:cur.id+'>'+c+(T|0),al:cur.al,no:cur.no,legs:[l],dist:l.dist,fly:l.h,stops:0,total:l.h,price:0};
+  say2(AP[L.b].city+' Control',`${cs}, diversion approved, direct ${AP[c].city}.`);load(it);T=INTRO+.3;playing=true;A.gate=null;A.dvOpen=0;A.sec=null;sync();return}
  if(a==='to'){if(A.dq>0)say2(dep.city+' Ground',`${cs}, negative, hold position, number ${A.dq+1}.`);else{say2(dep.city+' Tower',`${cs}, ${wind(dep.c)}, runway ${rwN(L,0)}, cleared for takeoff.`);say2(cs,`Cleared for takeoff runway ${rwN(L,0)}, ${cs}.`,1);A.gate=null}}
  if(a==='hd'){A.holding=!A.holding;A.lastN=-1;say2(cs,A.holding?`Request hold, ${cs}.`:`Ready for approach, ${cs}.`,1);if(A.holding)say2(arr.city+' Approach',`${cs}, hold as published, I will call you.`)}
  if(a==='ld'){const n=ahead(L,s.p);if(n)say2(arr.city+' Approach',`${cs}, negative, ${n} aircraft ahead. Hold and I will call you.`);else{say2(arr.city+' Tower',`${cs}, ${wind(arr.c)}, runway ${rwN(L,1)}, cleared to land.`);say2(cs,`Cleared to land runway ${rwN(L,1)}, ${cs}.`,1);A.f[k+'clr']=1;A.gate=null;A.holding=0}}
@@ -761,12 +766,21 @@ setInterval(()=>{if(A.gate&&A.gate.type==='app'&&A.holding)A.hold+=.00025;if(A.g
 /* AI traffic */
 let TR=null;function trafficInit(){const hubs=['LHR','JFK','DXB','DOH','NBO','JNB','SIN','HND','FRA','CDG','IST','ADD','LAX','SYD','GRU','DEL','CAI','MAD','AMS','ATL','BKK','HKG'].filter(c=>AP[c]);TR=[];for(let i=0;i<16;i++){const a=hubs[i%hubs.length],b=hubs[(i*5+3)%hubs.length];if(a===b)continue;const al=AL[Math.floor(hash(i+5)*AL.length)];TR.push({pts:gc(AP[a],AP[b],70),d:hav(AP[a],AP[b]),off:hash(i+9),cs:al[1]+(100+Math.floor(hash(i+2)*880))})}}
 function glyph(px,py,a,z,col){x.save();x.translate(px,py);x.rotate(a);x.fillStyle=col;x.strokeStyle='rgba(0,0,0,.6)';x.lineWidth=1;x.beginPath();const P=[[1,0],[.3,.12],[.2,1],[-.05,1],[-.15,.14],[-.8,.1],[-.85,.42],[-1,.42],[-1,0]];P.forEach((p,i)=>i?x.lineTo(p[0]*z,p[1]*z):x.moveTo(z,0));P.slice().reverse().forEach(p=>x.lineTo(p[0]*z,-p[1]*z));x.closePath();x.fill();x.stroke();x.restore()}
-function drawTraffic(){if(!cur||!TR&&(trafficInit(),0))return;const s=state(T),sc=Math.max(7,Math.min(13,cam.S/120)),lab=(t,px,py,c)=>{x.font='600 12px sans-serif';x.fillStyle=c;x.textAlign='left';x.fillText(t,px+sc+3,py+4)},P=(la,lo)=>{const k=Math.round((cam.lon-lo)/360);return[X(lo+360*k),Y(la)]};x.save();x.globalAlpha=.9;
+function drawTraffic(){if(!cur||!TR&&(trafficInit(),0))return;const s=state(T),sc=Math.max(11,Math.min(22,cam.S/90)),lab=(t,px,py,c)=>{x.font='600 12px sans-serif';x.fillStyle=c;x.textAlign='left';x.fillText(t,px+sc+3,py+4)},P=(la,lo)=>{const k=Math.round((cam.lon-lo)/360);return[X(lo+360*k),Y(la)]};x.save();x.globalAlpha=.9;
  for(const t of TR){const f=((s.realH*850/t.d+t.off)%1+1)%1,i=Math.min(69,Math.floor(f*70)),a=t.pts[i],q=t.pts[i+1],pa=P(a[0],a[1]),pq=P(q[0],q[1]);if(pa[0]<-20||pa[0]>W+20||pa[1]<-20||pa[1]>H+20)continue;glyph(pa[0],pa[1],Math.atan2(pq[1]-pa[1],pq[0]-pa[0]),sc,'#cfd8e6');if(cam.S>700)lab(t.cs,pa[0],pa[1],'#cfd8e6')}
  if(s.ph==='flight'&&!s.lay){const L=s.L,ru=L.dist*(1-s.p);if(ru<260)for(let i=1;i<=3;i++){const ra=ru-dAh(L,i)-850*A.hold;if(ra<=0)continue;const p=1-ra/L.dist,a=at(L,p),q=at(L,Math.min(1,p+.004)),pa=P(a[0],a[1]),pq=P(q[0],q[1]),al=AL[Math.floor(hash(i*7+L.dist)*AL.length)];glyph(pa[0],pa[1],Math.atan2(pq[1]-pa[1],pq[0]-pa[0]),sc,'#ffc247');lab(al[1]+(100+Math.floor(hash(i+L.dist)*880))+' ↓',pa[0],pa[1],'#ffc247')}}
+ if(s.ph==='flight'&&!s.lay){const L=s.L,nx=(a,b)=>{const pa=P(a[0],a[1]),pq=P(b[0],b[1]);return[pa,Math.atan2(pq[1]-pa[1],pq[0]-pa[0])]};
+  for(let j=0;j<8;j++){const op=j%2,k=(hash(j+L.dist)-.5)*.06,dp=(hash(j*3+1)-.5)*.16;let pj=op?1-(s.p*(1+k)+dp):s.p*(1+k)+dp;if(pj<.03||pj>.97||Math.abs(pj-s.p)*L.dist<4)continue;const a=at(L,pj),b=at(L,pj+(op?-.004:.004)),la=(hash(j+9)-.5)*1.2*(op?1:.6)+(op?.25:0);const A1=[a[0]+la,a[1]+la*.7],B1=[b[0]+la,b[1]+la*.7],[pa,an]=nx(A1,B1);glyph(pa[0],pa[1],an,sc,'#cfd8e6');if(cam.S>500)lab('ZZ'.replace(/ZZ/,AL[j*3%AL.length][1]+(100+j*137)),pa[0],pa[1],'#cfd8e6')}
+  if(A.gate&&A.gate.type==='dep'||s.t<.01&&s.alt<1){const d0=AP[L.a],h=rwH(L,0)*R,n=Math.max(A.dq,0);for(let i=1;i<=n;i++){const kk=i*.007,la=d0.lat-kk*Math.cos(h),lo=d0.lon-kk*Math.sin(h)/Math.cos(d0.lat*R),[pa]=nx([la,lo],[la,lo]);glyph(pa[0],pa[1],Math.PI/2-h,sc,'#ffc247');lab(AL[(i*5)%AL.length][1]+(200+i*91),pa[0],pa[1],'#ffc247')}}}
  x.restore()}
 const _dM=drawMap;drawMap=function(dt){_dM(dt);drawTraffic()};
-const _dr=draw;draw=function(dt){atcTick();if(A.gate&&A.pm)T=Math.min(T,A.gate.T);_dr(dt)};
+$('#pm').classList.add('on');
+const _dr=draw;draw=function(dt){if(!A.gate&&A.log.length&&performance.now()-A.logT>7000){A.log=[];renderLog()}atcTick();if(A.gate&&A.pm)T=Math.min(T,A.gate.T);_dr(dt)};
+function mkSearch(id,ph,items,ref){const sel=$('#'+id),row=sel.closest('.row')||sel.parentElement,i=document.createElement('input');i.placeholder=ph;i.style.marginBottom='6px';row.parentElement.insertBefore(i,row);let tm;
+ i.oninput=()=>{const q=i.value.trim().toLowerCase(),keep=sel.value,m=items().filter(o=>!q||o.t.toLowerCase().includes(q));sel.innerHTML=m.map(o=>`<option value="${o.v}">${o.t}</option>`).join('')||'<option value="">No match</option>';if(m.some(o=>o.v===keep))sel.value=keep;else if(m.length)sel.value=m[0].v;clearTimeout(tm);if(m.length&&ref)tm=setTimeout(()=>{if($('#from').value!==$('#to').value)refresh(true)},500)}}
+const apItems=()=>Object.values(AP).filter(a=>a.c!=='DIV').sort((a,b)=>(a.co+a.city).localeCompare(b.co+b.city)).map(a=>({v:a.c,t:`${a.city} (${a.c}) · ${a.co}`}));
+mkSearch('from','🔎 Search departure: airport, city or country',apItems,1);mkSearch('to','🔎 Search destination: airport, city or country',apItems,1);mkSearch('fAl','🔎 Search airline',()=>[{v:'',t:'All airlines'}].concat(AL.map(a=>({v:a[0],t:a[0]}))),1);
+document.body.insertAdjacentHTML('beforeend','<datalist id="apl">'+apItems().map(o=>`<option value="${o.t.split(' · ')[0]}">`).join('')+'</datalist>');
 $('#pm').onclick=()=>{A.pm=!A.pm;$('#pm').textContent='🎮 Pilot mode: '+(A.pm?'ON':'Off');$('#pm').classList.toggle('on',A.pm);if(!A.pm){A.gate=null;drawBtns()}else say2('Tower','Pilot mode on. You will request take-off and landing clearances.')};
 
 </script>
